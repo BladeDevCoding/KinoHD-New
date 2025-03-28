@@ -1,17 +1,18 @@
 from flask import Flask, request, jsonify
-from movie_search import search_movie_kinopoisk, create_direct_search_url
+from movie_search import search_movie_kinopoisk_api, create_direct_search_url
 import urllib.parse
+import os
 
 app = Flask(__name__)
 
-@app.route('/search', methods=['GET'])
-def search():
+@app.route('/api/search', methods=['GET'])
+def api_search():
     movie_name = request.args.get('movie', '')
     if not movie_name:
         return jsonify({"error": "Не вказано назву фільму"}), 400
     
-    # Шукаємо на Кінопошуку
-    results = search_movie_kinopoisk(movie_name)
+    # Шукаємо через API Кінопошуку
+    results = search_movie_kinopoisk_api(movie_name)
     
     # Якщо результатів немає, створюємо пряме посилання
     if not results:
@@ -27,6 +28,10 @@ def search():
         "movie": movie_name,
         "results": results
     })
+
+@app.route('/search', methods=['GET'])
+def search():
+    return api_search()
 
 @app.route('/', methods=['GET'])
 def home():
@@ -72,7 +77,7 @@ def home():
                     const resultsDiv = document.getElementById('results');
                     resultsDiv.innerHTML = '<div class="loading">Шукаємо фільми...</div>';
                     
-                    fetch(`/search?movie=${encodeURIComponent(movieName)}`)
+                    fetch(`/api/search?movie=${encodeURIComponent(movieName)}`)
                         .then(response => response.json())
                         .then(data => {
                             if (data.results && data.results.length > 0) {
@@ -109,7 +114,7 @@ def api_info():
         "description": "API для пошуку фільмів на sspoisk.ru",
         "endpoints": [
             {
-                "path": "/search",
+                "path": "/api/search",
                 "method": "GET",
                 "params": {
                     "movie": "Назва фільму для пошуку"
@@ -118,6 +123,10 @@ def api_info():
             }
         ]
     })
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    return jsonify({"status": "ok"})
 
 if __name__ == '__main__':
     app.run(debug=True) 

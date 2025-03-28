@@ -11,5 +11,8 @@
       "src": "/(.*)",
       "dest": "api.py"
     }
-  ]
+  ],
+  "env": {
+    "KINOPOISK_API_KEY": "6ca43889-42a5-4ef4-8de7-ab98315826d3"
+  }
 } 

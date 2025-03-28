@@ -3,6 +3,10 @@ from bs4 import BeautifulSoup
 import urllib.parse
 import re
 import json
+import os
+
+# Перевіряємо, чи встановлено змінну середовища для API ключа
+KINOPOISK_API_KEY = os.environ.get('KINOPOISK_API_KEY', '6ca43889-42a5-4ef4-8de7-ab98315826d3')
 
 def search_movie_kinopoisk(movie_name):
     """
@@ -114,20 +118,20 @@ def search_movie_kinopoisk_api(movie_name):
     Returns:
         list: Список результатів з посиланнями на sspoisk.ru
     """
-    # Кодуємо назву фільму для URL
-    encoded_query = urllib.parse.quote(movie_name)
-    
-    # Використовуємо неофіційний API Кінопошуку
-    search_url = f"https://kinopoiskapiunofficial.tech/api/v2.1/films/search-by-keyword?keyword={encoded_query}"
-    
-    # Заголовки для API
-    headers = {
-        "X-API-KEY": "6ca43889-42a5-4ef4-8de7-ab98315826d3",  # Потрібно отримати ключ на https://kinopoiskapiunofficial.tech/
-        "Content-Type": "application/json"
-    }
-    
     try:
-        response = requests.get(search_url, headers=headers)
+        # Кодуємо назву фільму для URL
+        encoded_query = urllib.parse.quote(movie_name)
+        
+        # Використовуємо неофіційний API Кінопошуку
+        search_url = f"https://kinopoiskapiunofficial.tech/api/v2.1/films/search-by-keyword?keyword={encoded_query}"
+        
+        # Заголовки для API
+        headers = {
+            "X-API-KEY": KINOPOISK_API_KEY,
+            "Content-Type": "application/json"
+        }
+        
+        response = requests.get(search_url, headers=headers, timeout=10)
         response.raise_for_status()
         data = response.json()
         
@@ -151,7 +155,7 @@ def search_movie_kinopoisk_api(movie_name):
         
         return results
     
-    except requests.exceptions.RequestException as e:
+    except Exception as e:
         print(f"Помилка при виконанні запиту до API Кінопошуку: {e}")
         return []
 
@@ -175,8 +179,8 @@ def create_direct_search_url(movie_name):
 def main():
     movie_name = input("Введіть назву фільму для пошуку: ")
     
-    print("Шукаємо на Кінопошуку...")
-    results = search_movie_kinopoisk(movie_name)
+    print("Шукаємо через API Кінопошуку...")
+    results = search_movie_kinopoisk_api(movie_name)
     
     if results:
         print(f"\nЗнайдено {len(results)} результатів:")
@@ -187,7 +191,7 @@ def main():
                 print(f"   ID: {result['id']}")
             print()
     else:
-        print("Результатів не знайдено через прямий пошук.")
+        print("Результатів не знайдено через API.")
         print("Створюємо пряме посилання для пошуку на sspoisk.ru...")
         direct_url = create_direct_search_url(movie_name)
         print(f"Пряме посилання: {direct_url}")
