@@ -4,9 +4,14 @@ import urllib.parse
 import re
 import json
 import os
+import time
 
 # Перевіряємо, чи встановлено змінну середовища для API ключа
 KINOPOISK_API_KEY = os.environ.get('KINOPOISK_API_KEY', '6ca43889-42a5-4ef4-8de7-ab98315826d3')
+
+# Кеш для результатів пошуку (для зменшення навантаження на API)
+search_cache = {}
+CACHE_EXPIRY = 3600  # 1 година в секундах
 
 def search_movie_kinopoisk(movie_name):
     """
@@ -118,6 +123,15 @@ def search_movie_kinopoisk_api(movie_name):
     Returns:
         list: Список результатів з посиланнями на sspoisk.ru
     """
+    # Перевіряємо кеш
+    cache_key = movie_name.lower()
+    current_time = time.time()
+    
+    if cache_key in search_cache:
+        cache_entry = search_cache[cache_key]
+        if current_time - cache_entry['timestamp'] < CACHE_EXPIRY:
+            return cache_entry['results']
+    
     try:
         # Кодуємо назву фільму для URL
         encoded_query = urllib.parse.quote(movie_name)
@@ -141,17 +155,31 @@ def search_movie_kinopoisk_api(movie_name):
             film_id = item.get("filmId")
             title = item.get("nameRu") or item.get("nameEn") or "Невідома назва"
             year = item.get("year", "")
+            film_type = item.get("type", "").lower()
+            
+            # Визначаємо тип (фільм чи серіал)
+            path_type = "film"
+            if film_type in ["tv_series", "mini_series", "tv_show"]:
+                path_type = "series"
             
             # Формуємо посилання на Кінопошук
-            kinopoisk_url = f"https://www.kinopoisk.ru/film/{film_id}/"
+            kinopoisk_url = f"https://www.kinopoisk.ru/{path_type}/{film_id}/"
             # Замінюємо на sspoisk.ru
             sspoisk_url = kinopoisk_url.replace("kinopoisk.ru", "sspoisk.ru")
             
             results.append({
                 "title": f"{title} ({year})" if year else title,
                 "url": sspoisk_url,
-                "id": str(film_id)
+                "id": str(film_id),
+                "year": year,
+                "type": film_type
             })
+        
+        # Зберігаємо результати в кеш
+        search_cache[cache_key] = {
+            'results': results,
+            'timestamp': current_time
+        }
         
         return results
     
