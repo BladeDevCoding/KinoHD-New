@@ -1,16 +1,13 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "api.py",
-      "use": "@vercel/python"
+  "functions": {
+    "api/*.py": {
+      "memory": 1024,
+      "maxDuration": 10
     }
-  ],
+  },
   "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "api.py"
-    }
+    { "src": "/(.*)", "dest": "/api/index.py" }
   ],
   "env": {
     "KINOPOISK_API_KEY": "6ca43889-42a5-4ef4-8de7-ab98315826d3"
