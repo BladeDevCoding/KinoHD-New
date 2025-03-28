@@ -122,7 +122,7 @@ def search_movie_kinopoisk_api(movie_name):
     
     # Заголовки для API
     headers = {
-        "X-API-KEY": "ваш_api_ключ",  # Потрібно отримати ключ на https://kinopoiskapiunofficial.tech/
+        "X-API-KEY": "6ca43889-42a5-4ef4-8de7-ab98315826d3",  # Потрібно отримати ключ на https://kinopoiskapiunofficial.tech/
         "Content-Type": "application/json"
     }
     
